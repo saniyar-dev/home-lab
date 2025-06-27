@@ -1,7 +1,10 @@
-# roles/registry/defaults/main.yml
-# Default variables for the registry role.
-# You can override these in your inventory (e.g., group_vars/all/main.yml)
-# roles/registry/defaults/main.yml
+# letsencrypt vars:
+---
+letsencrypt_certs:
+  - domain: "registry.tirro.ir"
+    email: "admin@tirro.ir" # It's good practice to use a real email
+
+# registry vars:
 ---
 # Host paths
 registry_storage_path: /var/registry/data

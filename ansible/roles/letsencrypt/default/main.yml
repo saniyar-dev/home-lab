@@ -1,0 +1,9 @@
+# roles/letsencrypt/defaults/main.yml
+# Define the certificates you want to obtain.
+# You can add more domains to this list.
+---
+letsencrypt_certs:
+  # - domain: "registry.tirro.ir"
+  #   email: "admin@tirro.ir" # It's good practice to use a real email
+  # - domain: "another-domain.com"
+  #   email: "admin@another-domain.com"
