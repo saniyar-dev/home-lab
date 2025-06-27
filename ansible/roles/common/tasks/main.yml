@@ -1,0 +1,12 @@
+# roles/common/tasks/main.yml
+# This task sets up passwordless sudo for the Ansible user.
+---
+- name: Configure passwordless sudo for the Ansible user
+  ansible.builtin.template:
+    src: 90-ansible-user.j2
+    dest: /etc/sudoers.d/90-ansible-user
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  become: yes
