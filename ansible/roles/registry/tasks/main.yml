@@ -1,11 +1,12 @@
 # roles/registry/tasks/main.yml
 # This is the main task file for the registry role.
 ---
-- name: Ensure required packages are installed
+- name: Ensure required system packages are installed
   ansible.builtin.apt:
     name:
       - docker.io
-      - apache2-utils # for htpasswd
+      - apache2-utils # for htpasswd command-line tool
+      - python3-passlib # REQUIRED by the htpasswd Ansible module
     state: present
     update_cache: yes
   become: yes
@@ -14,8 +15,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}" # Using ansible_user_id to avoid become issues
+    group: "{{ ansible_user_gid }}"
     mode: '0755'
   loop:
     - "{{ registry_storage_path }}"
@@ -29,8 +30,8 @@
   ansible.builtin.template:
     src: config.yml.j2
     dest: "{{ registry_config_file }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
     mode: '0644'
   notify: Restart registry container # This handler will restart the container if the config changes
 
@@ -39,16 +40,16 @@
     path: "{{ registry_auth_file }}"
     name: "{{ registry_user }}"
     password: "{{ registry_password }}" # NOTE: Store this password securely in Ansible Vault
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
     mode: '0644'
 
 - name: Copy TLS certificate and key
   ansible.builtin.copy:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
     mode: '0600'
   loop:
     - { src: "{{ registry_tls_cert_src }}", dest: "{{ registry_tls_path }}/fullchain.pem" }
