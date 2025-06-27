@@ -1,0 +1,7 @@
+# roles/registry/handlers/main.yml
+# Handlers are tasks that only run when notified by other tasks.
+---
+- name: Restart registry container
+  community.docker.docker_container:
+    name: registry
+    restart: yes

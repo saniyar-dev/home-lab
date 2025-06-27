@@ -1,0 +1,31 @@
+---
+version: 0.1
+log:
+  level: debug
+  formatter: json
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: {{ registry_storage_path }}
+  delete:
+    enabled: true
+auth:
+  htpasswd:
+    realm: local-registry
+    path: {{ registry_auth_file }}
+http:
+  addr: :5000
+  host: https://{{ registry_domain }}
+  tls:
+    certificate: {{ registry_tls_path }}/fullchain.pem
+    key: {{ registry_tls_path }}/privkey.pem
+  accesslog:
+    disabled: false
+proxy:
+  remoteurl: https://registry-1.docker.io
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
