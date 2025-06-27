@@ -1,23 +1,96 @@
-Home Lab Operations RunbookThis document is the central source of truth for the architecture, configuration, and operation of this home lab.Mind Mapmindmap
+Home Lab Operations RunbookThis document is the central source of truth for the architecture, configuration, and operation of this home lab. Its purpose is to ensure clear, repeatable processes and to serve as a log for future incident management.1. System Mind Mapmindmap
   root((Home Lab))
-    Container Infrastructure
-      Container Registry (@1)
-        Decision: Self-Hosted Docker Registry
-        Implementation: Docker Container
-        Configuration: /opt/registry/config.yml
+    Services
+      (@1)Container Registry
+        Domain: registry.tirro.ir
+        Technology: Docker Registry
+        Storage: /var/registry/data
+    Infrastructure
       Kubernetes
         Distribution: MicroK8s
         CNI: Calico
-1. Container RegistryThis section details the setup and maintenance of the local container registry.1.1. Architectural Decision Record (ADR)Decision: We will run a self-hosted container registry inside a Docker container on the host machine. This registry will serve as both a private registry for our own applications and as a pull-through cache/mirror for external registries like quay.io and docker.io.Reasoning: This decision directly addresses a 403 Forbidden error encountered when MicroK8s attempts to pull Calico CNI images from quay.io. A local registry acting as a proxy solves this issue permanently. Furthermore, as we plan to build a CI/CD pipeline, a local registry is a necessary component for storing our own built application images. This approach provides a long-term, scalable solution rather than a one-off manual fix.1.2. Pros & ConsPros:Solves Geo-Blocking: Permanently bypasses regional blocks by routing registry pulls through a configurable proxy.Enables CI/CD: Provides a local target to push custom-built application images.Improves Performance: Caches frequently used images (like base images, K8s components) on the LAN, making pod startup much faster.Increases Reliability: Reduces dependency on internet connection stability for pulling images.Cons:Slightly Higher Initial Complexity: Requires setting up a registry container, configuration file, and configuring clients (Docker, MicroK8s) to use it.Single Point of Failure: If the registry container goes down, no images can be pulled. (This is an acceptable risk for a home lab).Resource Usage: The registry itself consumes some disk space for images and a small amount of RAM/CPU.1.3. Alternative Workarounds ConsideredManual Image Loading: Manually pull required images via a proxy, save them as .tar files, and import them directly into MicroK8s's containerd using microk8s ctr image import.Critique: Effective for a one-time fix but creates significant manual toil for every new image or version update. Not a scalable solution.System-Wide Proxy for containerd: Configure the MicroK8s containerd service to use a proxy for all outgoing requests.Critique: A good solution, but running a registry mirror was chosen as it provides more long-term benefits (caching, private image storage) for roughly the same amount of setup effort.Use nerdctl with MicroK8s's containerd: Avoid installing a separate Docker daemon entirely and use the nerdctl addon to interact with the existing containerd process.Critique: This is the most resource-efficient option. The decision was made to stick with the more familiar Docker toolchain for now to prioritize getting the registry functional quickly, with the option to refactor to this more integrated approach later.1.4. Implementation DetailsHost Path for Configuration: /opt/registry/config.ymlHost Path for Image Storage: /var/registry/dataRun Command:# Ensure a consistent directory structure exists
-mkdir -p /var/registry/data
-touch /opt/registry/config.yml
+2. Container RegistryThis section details the setup and maintenance of the self-hosted container registry.2.1. Architectural DecisionDecision: We will deploy a self-hosted Docker container registry (registry:2). It will be configured to be secure (TLS and user authentication), act as a pull-through cache for public registries (like Docker Hub), and use an outbound proxy to fetch images. This solves the initial problem of 403 Forbidden errors on CNI image pulls.2.2. Pros & ConsPros:Secure: All traffic is encrypted via TLS, and access is controlled by user credentials.Solves Geo-Blocking: Outgoing image requests are routed through a specified proxy, bypassing regional blocks.Enables CI/CD: Provides a private, reliable, and secure target for pushing custom application images.Improves Performance & Reliability: Caches external images on the local network, speeding up deployments and reducing dependency on internet stability.Cons:Initial Setup Overhead: Requires configuration of DNS, firewall, TLS certificates, and user credentials.Single Point of Failure: The lab's ability to pull images depends on this single container. (This is an acceptable risk for a home lab environment).2.3. Alternatives ConsideredManual Image Loading: Loading images via docker save/docker load or microk8s ctr image import. Rejected due to being a manual, non-scalable process that creates operational toil.System-Wide Proxy: Configuring a proxy for the entire container runtime. Rejected in favor of the registry approach, which provides more benefits (caching, private storage) for similar effort.2.4. Core Configuration (config.yml)This is the primary configuration file for the registry service. It should be created at /opt/registry/config.yml on the host machine.version: 0.1
+# --- LOGGING ---
+# Enables detailed, machine-readable logging for easier troubleshooting.
+log:
+  level: debug
+  formatter: json
+  fields:
+    service: registry
+
+# --- STORAGE ---
+# Configures local filesystem storage and enables image deletion via the API.
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  delete:
+    enabled: true
+
+# --- AUTHENTICATION ---
+# Enforces user authentication for all API requests.
+auth:
+  htpasswd:
+    realm: local-registry
+    path: /etc/docker/registry/auth/htpasswd
+
+# --- HTTP & TLS ---
+# Configures the registry to serve traffic over HTTPS using our domain and TLS certs.
+http:
+  addr: :5000
+  host: [https://registry.tirro.ir](https://registry.tirro.ir)
+  tls:
+    certificate: /etc/docker/registry/tls/fullchain.pem
+    key: /etc/docker/registry/tls/privkey.pem
+  accesslog:
+    disabled: false
+
+# --- PULL-THROUGH CACHE ---
+# Configures the registry to act as a cache for Docker Hub.
+# The proxy it USES to fetch these images is set by environment variables, NOT here.
+proxy:
+  remoteurl: [https://registry-1.docker.io](https://registry-1.docker.io)
+
+# --- HEALTH ---
+# Enables a health check endpoint for the storage driver.
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
+2.5. Setup & ImplementationFollow these steps to deploy the registry.Step 1: Prepare Host DirectoriesCreate the necessary directories on the host machine. The registry container will mount these to persist data and load configuration.# Create directory for registry data on the separate partition mount
+sudo mkdir -p /var/registry/data
+
+# Create directories for configuration, TLS certs, and auth files
+sudo mkdir -p /opt/registry/tls
+sudo mkdir -p /opt/registry/auth
+
+# Create the empty config and auth files
+sudo touch /opt/registry/config.yml
+sudo touch /opt/registry/auth/htpasswd
+Step 2: Populate config.ymlCopy the YAML content from section 2.4 into /opt/registry/config.yml.Step 3: Generate TLS Certificates (Let's Encrypt)DNS: Ensure registry.tirro.ir has an A record pointing to your static IP.Firewall: Temporarily open port 80 on your firewall and forward it to your lab machine.Certbot: Install and run certbot to issue the certificate.sudo snap install --classic certbot
+sudo certbot certonly --standalone -d registry.tirro.ir
+Copy Certs: Copy the generated certificates to the volume mount location.CERT_PATH="/etc/letsencrypt/live/registry.tirro.ir"
+sudo cp "${CERT_PATH}/fullchain.pem" /opt/registry/tls/
+sudo cp "${CERT_PATH}/privkey.pem" /opt/registry/tls/
+Firewall: Close port 80.Step 4: Create User CredentialsUse htpasswd to create a username and password. You will be prompted to enter a password.# Install apache2-utils if not already present
+sudo apt-get update && sudo apt-get install -y apache2-utils
+
+# Create the first user (e.g., 'ci-user')
+sudo htpasswd -cB /opt/registry/auth/htpasswd ci-user
+Step 5: Run the Registry ContainerThis command starts the registry, mounts all the necessary files, and critically, passes the outbound proxy information as environment variables.# --- IMPORTANT ---
+# Set this to the proxy that allows you to bypass geo-restrictions
+export OUTBOUND_PROXY="[http://your-outbound-proxy.com:8080](http://your-outbound-proxy.com:8080)"
 
 # Run the container
-docker run -d -p 5000:5000 --restart=always --name registry \
+docker run -d \
+  -p 5000:5000 \
+  --restart=always \
+  --name registry \
   -v /var/registry/data:/var/lib/registry \
-  -v /opt/registry/config.yml:/etc/docker/registry/config.yml \
+  -v /opt/registry/config.yml:/etc/docker/registry/config.yml:ro \
+  -v /opt/registry/tls:/etc/docker/registry/tls:ro \
+  -v /opt/registry/auth:/etc/docker/registry/auth:ro \
+  -e "HTTP_PROXY=${OUTBOUND_PROXY}" \
+  -e "HTTPS_PROXY=${OUTBOUND_PROXY}" \
   registry:2
-1.5. TroubleshootingCheck container logs:docker logs registry
-Verify the registry is running:docker ps | grep registry
-Test connectivity from the host:curl http://localhost:5000/v2/_catalog
-A successful response for a new, empty registry is {"repositories":[]}. If you get curl: (7) Failed to connect to localhost port 5000: Connection refused, the container is likely not running or the port is not mapped correctly.1.6. Incident Log| Date | Incident Summary | Root Cause | Resolution ||  |  |  |  |
+2.6. Troubleshooting GuideCheck Logs: docker logs registry (Logs are in JSON format).Authentication Failure: curl -u "user:pass" https://registry.tirro.ir:5000/v2/_catalog. A 401 Unauthorized response means credentials are bad. Check the htpasswd file.TLS Error: An SSL/TLS error from curl likely means the certificates weren't copied correctly, the paths in config.yml are wrong, or the container wasn't restarted after a change.500 Internal Server Error: Often points to a storage or configuration problem. Check the logs for specific error messages.Can't Pull External Images: If you can authenticate but pulling an external image like hello-world fails, the OUTBOUND_PROXY environment variables are likely incorrect
