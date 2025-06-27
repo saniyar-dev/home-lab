@@ -1,0 +1,5 @@
+# roles/common/templates/90-ansible-user.j2
+# This template grants the user running the Ansible playbook
+# passwordless sudo access.
+# {{ ansible_user }} is a magic variable that holds the remote user name.
+{{ ansible_remote_user }} ALL=(ALL) NOPASSWD: ALL
