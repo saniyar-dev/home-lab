@@ -1,6 +1,7 @@
 #### letsencrypt vars ####
 letsencrypt_certs:
   - domain: "registry.tirro.ir"
+    base_domain: "tirro.ir"
     email: "admin@tirro.ir" # It's good practice to use a real email
 
 #### registry vars ####

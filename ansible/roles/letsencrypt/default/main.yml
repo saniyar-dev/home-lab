@@ -1,9 +1,27 @@
-# roles/letsencrypt/defaults/main.yml
 # Define the certificates you want to obtain.
 # You can add more domains to this list.
+# roles/letsencrypt/defaults/main.yml
 ---
+# --- Challenge Configuration ---
+# Set the challenge type to 'dns' or 'http'.
+letsencrypt_challenge_type: "dns"
+
+# List of certificates to obtain.
 letsencrypt_certs:
   # - domain: "registry.tirro.ir"
+  #   base_domain: "tirro.ir"
   #   email: "admin@tirro.ir" # It's good practice to use a real email
-  # - domain: "another-domain.com"
-  #   email: "admin@another-domain.com"
+
+# --- ArvanCloud API Settings (OVERRIDE IN VAULT) ---
+arvancloud_api_key: "YOUR_API_KEY_HERE"
+
+# --- acme-dns Service Settings ---
+# These variables control the local acme-dns service.
+acme_dns_config_path: "/opt/acme-dns/config.cfg"
+acme_dns_storage_path: "/var/lib/acme-dns"
+acme_dns_auth_info_path: "{{ acme_dns_storage_path }}/acme-dns-auth.json"
+acme_dns_api_url: "http://127.0.0.1:8080" # The API endpoint for the local acme-dns container
+
+# acme-dns-client binary settings
+acme_client_install_path: "/usr/local/bin/acme-dns-client"
+
