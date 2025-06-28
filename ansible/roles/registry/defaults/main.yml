@@ -19,3 +19,8 @@ registry_outbound_proxy: "http://your-outbound-proxy.com:8080"
 registry_user: "ci-user"
 registry_password: "CHANGEME"
 
+# Source paths for TLS files on your Ansible control node
+# You should point these to where your certs are stored locally.
+# NOTE: These variables are required if registry.domain value doesn't exist on {{ letsencrypt_certs }} list.
+# registry_tls_cert_src: "/path/on/ansible/controller/to/fullchain.pem"
+# registry_tls_key_src: "/path/on/ansible/controller/to/privkey.pem"

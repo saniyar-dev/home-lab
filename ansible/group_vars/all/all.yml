@@ -1,11 +1,9 @@
-# letsencrypt vars:
----
+#### letsencrypt vars ####
 letsencrypt_certs:
   - domain: "registry.tirro.ir"
     email: "admin@tirro.ir" # It's good practice to use a real email
 
-# registry vars:
----
+#### registry vars ####
 # Host paths
 registry_storage_path: /var/registry/data
 registry_config_base_path: /opt/registry

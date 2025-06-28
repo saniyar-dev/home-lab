@@ -55,6 +55,22 @@
     - { src: "{{ registry_tls_cert_src }}", dest: "{{ registry_tls_path }}/fullchain.pem" }
     - { src: "{{ registry_tls_key_src }}", dest: "{{ registry_tls_path }}/privkey.pem" }
   notify: Restart registry container # Also restart if certs change
+  when: registry_domain not in (letsencrypt_certs | map(attribute='domain'))
+
+- name: Copy TLS certs from letsencrypt dir to registry config dir
+  ansible.builtin.copy:
+    src: "/etc/letsencrypt/live/{{ registry_domain }}/{{ item }}"
+    dest: "{{ registry_tls_path }}/{{ item }}"
+    remote_src: yes
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
+    mode: '0644'
+  loop:
+    - fullchain.pem
+    - privkey.pem
+  become: yes
+  notify: Restart registry container
+  when: registry_domain in (letsencrypt_certs | map(attribute='domain'))
 
 - name: Deploy the Docker Registry container
   community.docker.docker_container:
