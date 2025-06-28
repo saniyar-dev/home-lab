@@ -1,0 +1,7 @@
+# roles/letsencrypt/handlers/acme-dns.yml
+# Handlers are tasks that only run when notified by other tasks.
+---
+- name: Restart acme-dns container
+  community.docker.docker_container:
+    name: acme-dns
+    restart: yes

@@ -1,0 +1,32 @@
+# roles/letsencrypt/templates/config.cfg.j2
+[general]
+# The IP address and port to listen on for DNS requests
+listen = "{{ acme_dns_listen_address }}:53"
+protocol = "udp"
+# The domain this acme-dns server is authoritative for.
+# It is set dynamically from the registered account's fulldomain.
+domain = "{{ acme_dns_record_value | default('') }}"
+# nsname is the name server name that will be returned in the NS record.
+nsname = "{{ acme_dns_record_value | default('') }}"
+# The A record for the nsname. This should be the public IP of your server.
+nsadmin = "admin.{{ arvancloud_base_domain }}"
+records = [
+    # Also be authoritative for the domains we are issuing certs for
+    {% for cert in letsencrypt_certs %}"{{ cert.domain }}.",{% endfor %}
+]
+
+[database]
+engine = "sqlite3"
+connection = "/var/lib/acme-dns/acme-dns.db"
+
+[api]
+ip = "{{ acme_dns_listen_address }}"
+port = "{{ acme_dns_api_port }}"
+# For simplicity in the lab, we are not using TLS for the internal API
+tls = "none"
+corsorigins = ["*"]
+
+[logconfig]
+loglevel = "debug"
+logtype = "stdout"
+logformat = "text"

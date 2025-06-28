@@ -1,0 +1,38 @@
+# roles/letsencrypt/tasks/arvan-cloud.yml
+---
+- name: Get existing DNS records from ArvanCloud
+  ansible.builtin.uri:
+    url: "https://napi.arvancloud.ir/cdn/4.0/domains/{{ arvancloud_base_domain }}/dns-records"
+    method: GET
+    headers:
+      Authorization: "Apikey {{ arvancloud_api_key }}"
+      Accept: "application/json"
+    return_content: yes
+  register: arvan_dns_records
+
+- name: Create DNS CNAME record for ACME challenge if it doesn't exist
+  ansible.builtin.uri:
+    url: "https://napi.arvancloud.ir/cdn/4.0/domains/{{ arvancloud_base_domain }}/dns-records"
+    method: POST
+    headers:
+      Authorization: "apikey {{ arvancloud_api_key }}"
+      Content-Type: "application/json"
+      Accept: "application/json"
+    body_format: json
+    body:
+      type: "CNAME"
+      name: "_acme-challenge.{{ item.domain | regex_replace('\\.' + item.base_domain + '$', '') }}"
+      value:
+        - cname: "{{ acme_dns_record_value }}"
+          port: null
+          weight: null
+          origin: null
+      ttl: 120
+      cloud: false
+  loop: "{{ letsencrypt_certs }}"
+  when: >
+    item.domain is endingwith(item.base_domain) and
+    acme_dns_record_value is defined and
+    not (arvan_dns_records.json.data | selectattr('type', 'equalto', 'CNAME')
+                                      | selectattr('name', 'equalto', '_acme-challenge.' + (item.domain | regex_replace('\\.' + item.base_domain + '$', '')))
+                                      | list)

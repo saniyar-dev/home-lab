@@ -1,0 +1,69 @@
+# roles/letsencrypt/tasks/acme-dns.yml
+---
+- name: Ensure acme-dns directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ acme_dns_storage_path }}"
+    - "{{ acme_dns_config_path }}"
+  become: yes
+
+- name: Template the acme-dns server config
+  ansible.builtin.template:
+    src: acme-dns_config.cfg.j2
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
+    dest: "{{ acme_dns_config_path }}"
+    mode: '0644'
+  become: yes
+  notify: Restart acme-dns container # Define this handler
+
+- name: Deploy the acme-dns container
+  community.docker.docker_container:
+    name: acme-dns
+    image: hub.hamdocker.ir/joohoi/acme-dns
+    state: started
+    restart_policy: always
+    ports:
+      - "8053:53/udp"
+      - "8080:8080"
+    volumes:
+      - "{{ acme_dns_storage_path }}:/var/lib/acme-dns"
+      - "{{ acme_dns_config_path }}:/etc/acme-dns/config.cfg:ro"
+  become: yes
+
+- name: Download and install acme-dns-client binary
+  ansible.builtin.unarchive:
+    src: "https://github.com/acme-dns/acme-dns-client/releases/download/v0.3/acme-dns-client_0.3_linux_amd64.tar.gz"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+    creates: "{{ acme_client_install_path }}"
+  become: yes
+
+- name: Register client with local acme-dns server
+  ansible.builtin.command: "{{ acme_client_install_path }} -s {{ acme_dns_api_url }} register"
+  args:
+    creates: "{{ acme_dns_auth_info_path }}"
+  register: acme_register_result
+  changed_when: "'Account registered' in acme_register_result.stdout"
+  become: yes
+
+- name: Store acme-dns registration info
+  ansible.builtin.copy:
+    content: "{{ acme_register_result.stdout }}"
+    dest: "{{ acme_dns_auth_info_path }}"
+    mode: '0600'
+  when: acme_register_result.changed
+  become: yes
+
+- name: Slurp the acme-dns auth info for use in other tasks
+  ansible.builtin.slurp:
+    src: "{{ acme_dns_auth_info_path }}"
+  register: acme_auth_slurped
+  become: yes
+
+- name: Set acme-dns record fact from registered account
+  ansible.builtin.set_fact:
+    acme_dns_record_value: "{{ (acme_auth_slurped.content | b64decode | from_json).fulldomain }}"
