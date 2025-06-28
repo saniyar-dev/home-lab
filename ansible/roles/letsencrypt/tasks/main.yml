@@ -2,9 +2,9 @@
 ---
 - name: Execute DNS-01 challenge tasks
   include_tasks: dns_challenge.yml
-  when: letsencrypt_challenge_type == 'dns'
+  when: letsencrypt_challenge_type == 'dns' and letsencrypt_certs is defined and letsencrypt_certs | length > 0
 
 - name: Execute HTTP-01 challenge tasks
   include_tasks: http_challenge.yml
-  when: letsencrypt_challenge_type == 'http'
+  when: letsencrypt_challenge_type == 'http' and letsencrypt_certs is defined and letsencrypt_certs | length > 0
 

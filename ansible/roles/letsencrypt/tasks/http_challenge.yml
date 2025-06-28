@@ -1,0 +1,16 @@
+# roles/letsencrypt/tasks/http_challenge.yml
+---
+- name: Install certbot from snap
+  ansible.builtin.snap:
+    name: certbot
+    classic: yes
+  become: yes
+
+- name: Obtain Let's Encrypt certificates via HTTP-01
+  ansible.builtin.command: >-
+    certbot certonly --standalone --non-interactive --agree-tos
+    --email {{ item.email }} -d {{ item.domain }}
+  args:
+    creates: /etc/letsencrypt/live/{{ item.domain }}/fullchain.pem
+  loop: "{{ letsencrypt_certs }}"
+  become: yes
