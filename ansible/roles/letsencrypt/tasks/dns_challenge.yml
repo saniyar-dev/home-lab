@@ -3,9 +3,6 @@
 - name: Set up acme-dns service and client
   include_tasks: acme-dns.yml
 
-- name: Configure ArvanCloud DNS for ACME challenge
-  include_tasks: arvan-cloud.yml
-
 - name: Obtain certificate using acme-dns client for each domain
   ansible.builtin.command: >-
     {{ acme_client_install_path }} -s {{ acme_dns_api_url }} -d {{ item.domain }} -a {{ acme_dns_auth_info_path }} cert
