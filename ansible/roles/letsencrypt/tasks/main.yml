@@ -10,8 +10,8 @@
   file:
     path: "{{ acme_sh_git_clone_dest | dirname }}"
     state: "directory"
-    owner: "{{ acme_sh_become_user }}"
-    group: "{{ acme_sh_become_user }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0755"
   when: not acme_sh_uninstall
 
@@ -22,7 +22,7 @@
     dest: "{{ acme_sh_git_clone_dest }}"
     update: "{{ acme_sh_git_update }}"
   when: not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Install acme.sh
   command: >-
@@ -33,13 +33,13 @@
     chdir: "{{ acme_sh_git_clone_dest }}"
     creates: "~/.acme.sh/acme.sh"
   when: not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Determine if acme.sh is installed
   stat:
     path: "~/.acme.sh/acme.sh"
   register: is_acme_sh_installed
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Upgrade acme.sh
   command: ./acme.sh --upgrade
@@ -51,14 +51,14 @@
     - not acme_sh_uninstall
   register: upgrade_result
   changed_when: upgrade_result.rc == 0 and "Upgrade success" in upgrade_result.stdout
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Create certificate path
   file:
     path: "{{ acme_sh_copy_certs_to_path }}"
     state: "directory"
-    owner: "{{ acme_sh_become_user }}"
-    group: "{{ acme_sh_become_user }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0755"
   when: not acme_sh_uninstall
 
@@ -66,8 +66,8 @@
   file:
     path: "{{ acme_sh_copy_certs_to_path }}/{{ item.domains | first }}"
     state: "directory"
-    owner: "{{ acme_sh_become_user }}"
-    group: "{{ acme_sh_become_user }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0755"
   loop: "{{ acme_sh_domains }}"
   loop_control:
@@ -85,7 +85,7 @@
   when:
     - acme_sh_uninstall
     - is_acme_sh_installed.stat.exists
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Remove acme.sh certificate(s) renewals from cron job
   command: >-
@@ -99,7 +99,7 @@
     - acme_sh_domains and item.domains is defined and item.domains
     - item.remove is defined and item.remove
     - not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
   register: remove_result
 
 - name: Remove acme.sh internal certificate files
@@ -111,7 +111,7 @@
     - item.remove is defined and item.remove
     - not acme_sh_uninstall
   loop: "{{ acme_sh_domains }}"
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Remove acme.sh installed certificate files
   file:
@@ -132,7 +132,7 @@
     - "~/.acme.sh"
   when:
     - acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Run custom acme.sh command
   command: ./acme.sh {{ item.custom_command }}
@@ -147,7 +147,7 @@
     - item.custom_command is defined and item.custom_command
     - item.remove is undefined or not item.remove
     - not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Issue acme.sh certificate(s) (this will sleep for dns_sleep seconds)
   command: >-
@@ -173,7 +173,7 @@
     - item.custom_command is undefined or not item.custom_command
     - item.remove is undefined or not item.remove
     - not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
   register: issue_result
   changed_when: issue_result.rc == 0 and "Cert success" in issue_result.stdout
   failed_when: issue_result.rc != 0 and "Domains not changed" not in issue_result.stdout
@@ -192,15 +192,15 @@
     - item.force_renew is defined and item.force_renew
     - item.remove is undefined or not item.remove
     - not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
   register: renew_result
   failed_when: renew_result.rc != 0 and "Reload error for" not in renew_result.stderr
 
 - name: Ensure installed certificates have correct user / group ownership
   file:
     path: "{{ acme_sh_copy_certs_to_path }}/{{ item.domains | first }}*"
-    group: "{{ acme_sh_become_user }}"
-    owner: "{{ acme_sh_become_user }}"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
     mode: "0644"
   loop:
     - "{{ acme_sh_domains }}"
@@ -228,7 +228,7 @@
     - item.custom_command is undefined or not item.custom_command
     - item.remove is undefined or not item.remove
     - not acme_sh_uninstall
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
   register: install_cert_result
   changed_when: issue_result.results[domains_index].changed or renew_result.results[domains_index].changed
   failed_when: install_cert_result.rc != 0 and "Reload error for" not in install_cert_result.stderr
@@ -240,7 +240,7 @@
   when: acme_sh_list_domains and not acme_sh_uninstall
   changed_when: False
   register: list_domains
-  become_user: "{{ acme_sh_become_user }}"
+  become_user: "{{ ansible_user }}"
 
 - name: List acme.sh certificate information
   debug:
