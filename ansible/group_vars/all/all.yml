@@ -1,8 +1,13 @@
 #### letsencrypt vars ####
-letsencrypt_certs:
-  - domain: "registry.tirro.ir"
-    base_domain: "tirro.ir"
-    email: "admin@tirro.ir" # It's good practice to use a real email
+# acme_sh_uninstall: true
+acme_sh_become_user: "saniyar"
+acme_sh_copy_certs_to_path: "/etc/ssl/acme.sh"
+acme_sh_proxy:
+  "http_proxy": "http://127.0.0.1:10809"
+  "https_proxy": "http://127.0.0.1:10809"
+acme_sh_domains: 
+  - domains: ["registry.tirro.ir"]
+    install_cert_reloadcmd: "docker restart registry"
 
 #### registry vars ####
 # Host paths
@@ -10,6 +15,7 @@ registry_storage_path: /var/registry/data
 registry_config_base_path: /opt/registry
 registry_config_file: "{{ registry_config_base_path }}/config.yml"
 registry_tls_path: "{{ registry_config_base_path }}/tls"
+registry_copy_from_path: "{{ acme_sh_copy_certs_to_path }}/registry.tirro.ir"
 registry_auth_path: "{{ registry_config_base_path }}/auth"
 registry_auth_file: "{{ registry_auth_path }}/htpasswd"
 
