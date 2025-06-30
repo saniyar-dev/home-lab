@@ -7,20 +7,53 @@
   loop: "{{ xray_dependencies }}"
   when: not xray_uninstall
 
-- name: Init config dir from template
+- name: Ensure there is no directory available
   file:
-    path: "{{ xray_config_path | dirname }}"
+    path: "{{ item }}"
+    state: "absent"
+  loop: ["{{ xray_config_path }}", "{{ xray_install_script_path }}", "{{ xray_log_path }}"]
+  when: xray_uninstall or xray_config_update
+
+- name: Ensure directories are available
+  file:
+    path: "{{ item }}"
     state: "directory"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: "0755"
-  when: not xray_uninstall
+  loop: ["{{ xray_config_path }}", "{{ xray_install_script_path }}", "{{ xray_log_path }}"]
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
 
 - name: Git clone {{ xray_config_git_template }}
   git:
     repo: "{{ xray_config_git_template }}"
     dest: "{{ xray_config_path }}"
     update: "{{ xray_config_update }}"
-  when: not xray_uninstall
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
   become_user: "{{ ansible_user }}"
 
+- name: Install xray from install script
+  ansible.builtin.shell: >-
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u "{{ ansible_user }}"
+  when: not xray_uninstall
+
+- name: Copy configs from local host
+  ansible.builtin.copy:
+    src: "{{ xray_config_local_dir_src }}/"
+    dest: "{{ xray_config_path }}/"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_gid }}"
+    mode: '0600'
+  # notify: Restart xray service
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
+
+- name: Uninstall xray from install script
+  ansible.builtin.shell: >-
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove
+  when: xray_uninstall

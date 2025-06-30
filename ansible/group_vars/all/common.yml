@@ -1,1 +1,3 @@
 ansible_user: "saniyar"
+
+xray_config_local_dir_src: "/home/saniyar/vpn/proxy"
