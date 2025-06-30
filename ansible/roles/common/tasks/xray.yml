@@ -36,10 +36,18 @@
     - xray_config_update
   become_user: "{{ ansible_user }}"
 
+- name: Determine if xray is installed
+  stat:
+    path: "/etc/systemd/system/xray.service"
+  register: is_xray_installed
+  become_user: "{{ ansible_user }}"
+
 - name: Install xray from install script
   ansible.builtin.shell: >-
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u "{{ ansible_user }}"
-  when: not xray_uninstall
+  when: 
+    - not xray_uninstall
+    - not is_xray_installed.stat.exists
 
 - name: Copy configs from local host
   ansible.builtin.copy:
