@@ -1,0 +1,9 @@
+xray_uninstall: false
+
+xray_dependencies: ["cron", "git", "wget"]
+
+xray_config_git_template: "https://github.com/saniyar-dev/xray-core_leastPing-leastLoad_template.git"
+xray_config_path: "/usr/local/etc/xray"
+xray_config_update: true
+
+xray_exec_path: "/usr/local/bin/xray"

@@ -1,1 +1,26 @@
 # roles/common/tasks/xray.yml
+---
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: "present"
+  loop: "{{ xray_dependencies }}"
+  when: not xray_uninstall
+
+- name: Init config dir from template
+  file:
+    path: "{{ xray_config_path | dirname }}"
+    state: "directory"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  when: not xray_uninstall
+
+- name: Git clone {{ xray_config_git_template }}
+  git:
+    repo: "{{ xray_config_git_template }}"
+    dest: "{{ xray_config_path }}"
+    update: "{{ xray_config_update }}"
+  when: not xray_uninstall
+  become_user: "{{ ansible_user }}"
+
