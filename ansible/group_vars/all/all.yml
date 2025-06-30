@@ -1,14 +1,20 @@
-# roles/registry/defaults/main.yml
-# Default variables for the registry role.
-# You can override these in your inventory (e.g., group_vars/all/main.yml)
-# roles/registry/defaults/main.yml
----
+#### letsencrypt vars ####
+# acme_sh_uninstall: true
+acme_sh_copy_certs_to_path: "/etc/ssl/acme.sh"
+acme_sh_proxy:
+  "http_proxy": "http://127.0.0.1:10809"
+  "https_proxy": "http://127.0.0.1:10809"
+acme_sh_domains: 
+  - domains: ["registry.tirro.ir"]
+    install_cert_reloadcmd: "docker restart registry"
+
+#### registry vars ####
 # Host paths
 registry_storage_path: /var/registry/data
 registry_config_base_path: /opt/registry
 registry_config_file: "{{ registry_config_base_path }}/config.yml"
 registry_tls_path: "{{ registry_config_base_path }}/tls"
-registry_tls_copy_from_path: "{{ acme_sh_copy_certs_to_path }}"
+registry_copy_from_path: "{{ acme_sh_copy_certs_to_path }}/registry.tirro.ir"
 registry_auth_path: "{{ registry_config_base_path }}/auth"
 registry_auth_file: "{{ registry_auth_path }}/htpasswd"
 
@@ -20,7 +26,3 @@ registry_outbound_proxy: "http://your-outbound-proxy.com:8080"
 registry_user: "ci-user"
 registry_password: "CHANGEME"
 
-# Source paths for TLS files on your Ansible control node
-# You should point these to where your certs are stored locally.
-# NOTE: These variables are required if registry.domain value doesn't exist on {{ letsencrypt_certs }} list.
-# registry_tls_copy_from_local_path: "/path/on/ansible/controller/to/certs"
