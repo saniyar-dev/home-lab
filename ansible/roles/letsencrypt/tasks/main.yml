@@ -115,7 +115,7 @@
 
 - name: Remove acme.sh installed certificate files
   file:
-    path: "{{ acme_sh_copy_certs_to_path }}"
+    path: "{{ acme_sh_copy_certs_to_path }}/{{ item.domain | first }}"
     state: "absent"
   loop: "{{ acme_sh_domains }}"
   when:
