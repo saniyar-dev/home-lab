@@ -53,13 +53,14 @@
   ansible.builtin.copy:
     src: "{{ xray_config_local_dir_src }}/"
     dest: "{{ xray_config_path }}/"
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0600'
   # notify: Restart xray service
   when: 
     - not xray_uninstall 
     - xray_config_update
+  become_user: "{{ ansible_user }}"
 
 - name: Uninstall xray from install script
   ansible.builtin.shell: >-
