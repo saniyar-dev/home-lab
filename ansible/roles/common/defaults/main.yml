@@ -1,0 +1,15 @@
+xray_uninstall: false
+
+xray_dependencies: ["cron", "git", "wget"]
+
+xray_config_git_template: "https://github.com/saniyar-dev/xray-core_leastPing-leastLoad_template.git"
+xray_config_path: "/usr/local/etc/xray"
+xray_config_update: true
+
+xray_log_path: "/var/log/xray"
+
+xray_exec_path: "/usr/local/bin/xray"
+xray_install_url: "https://github.com/XTLS/Xray-install/raw/main/install-release.sh"
+xray_install_script_path: "/tmp/install-xray"
+
+xray_config_local_dir_src: "path/to/config/files"

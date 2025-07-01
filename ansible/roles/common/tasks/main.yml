@@ -10,3 +10,6 @@
     mode: '0440'
     validate: 'visudo -cf %s'
   become: yes
+
+- name: Run xray tasks
+  include_tasks: xray.yml

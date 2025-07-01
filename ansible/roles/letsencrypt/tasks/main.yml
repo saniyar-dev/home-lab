@@ -163,7 +163,7 @@
     {{ item.extra_flags_issue | default(acme_sh_default_extra_flags_issue) }}
   args:
     chdir: "~/.acme.sh"
-  environment: ["{{ item.dns_provider_api_keys | default(acme_sh_default_dns_provider_api_keys) }}", "{{ acme_sh_proxy }}"]
+  environment: ["{{ item.dns_provider_api_keys | default(acme_sh_default_dns_provider_api_keys) }}", "{{ proxy }}"]
   loop: "{{ acme_sh_domains }}"
   when:
     - acme_sh_domains and item.domains is defined and item.domains

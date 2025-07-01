@@ -1,0 +1,83 @@
+# roles/common/tasks/xray.yml
+---
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: "present"
+  loop: "{{ xray_dependencies }}"
+  when: not xray_uninstall
+
+- name: Ensure there is no directory available
+  file:
+    path: "{{ item }}"
+    state: "absent"
+  loop: ["{{ xray_config_path }}", "{{ xray_install_script_path }}", "{{ xray_log_path }}"]
+  when: xray_uninstall or xray_config_update
+
+- name: Ensure directories are available
+  file:
+    path: "{{ item }}"
+    state: "directory"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop: ["{{ xray_config_path }}", "{{ xray_install_script_path }}", "{{ xray_log_path }}"]
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
+
+- name: Git clone {{ xray_config_git_template }}
+  git:
+    repo: "{{ xray_config_git_template }}"
+    dest: "{{ xray_config_path }}"
+    update: "{{ xray_config_update }}"
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
+  become_user: "{{ ansible_user }}"
+
+- name: Determine if xray is installed
+  stat:
+    path: "/etc/systemd/system/xray.service"
+  register: is_xray_installed
+  become_user: "{{ ansible_user }}"
+
+- name: Install xray from install script
+  ansible.builtin.shell: >-
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u "{{ ansible_user }}"
+  when: 
+    - not xray_uninstall
+    - not is_xray_installed.stat.exists
+
+- name: Add xray-service.conf to xray.service.d
+  ansible.builtin.template:
+    src: xray-service.conf.j2
+    dest: /etc/systemd/system/xray.service.d/xray-service.conf
+    owner: root
+    group: root
+    mode: '644'
+  become: yes
+  notify: 
+    - Systemd daemon-reload
+    - Restart xray service
+  when: 
+    - not xray_uninstall
+    - not is_xray_installed.stat.exists
+
+- name: Copy configs from local host
+  ansible.builtin.copy:
+    src: "{{ xray_config_local_dir_src }}/"
+    dest: "{{ xray_config_path }}/"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  notify: Restart xray service
+  when: 
+    - not xray_uninstall 
+    - xray_config_update
+  become_user: "{{ ansible_user }}"
+
+- name: Uninstall xray from install script
+  ansible.builtin.shell: >-
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove
+  when: xray_uninstall
