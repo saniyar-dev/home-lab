@@ -15,8 +15,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ ansible_user_id }}" # Using ansible_user_id to avoid become issues
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}" # Using ansible_user to avoid become issues
+    group: "{{ ansible_user }}"
     mode: '0755'
   loop:
     - "{{ registry_storage_path }}"
@@ -30,8 +30,8 @@
   ansible.builtin.template:
     src: config.yml.j2
     dest: "{{ registry_config_file }}"
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0644'
   notify: Restart registry container # This handler will restart the container if the config changes
 
@@ -40,16 +40,16 @@
     path: "{{ registry_auth_file }}"
     name: "{{ registry_user }}"
     password: "{{ registry_password }}" # NOTE: Store this password securely in Ansible Vault
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Copy TLS certificate and key
   ansible.builtin.copy:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0600'
   loop:
     - { src: "{{ registry_tls_cert_src }}", dest: "{{ registry_tls_path }}/fullchain.pem" }
@@ -62,8 +62,8 @@
     src: "/etc/letsencrypt/live/{{ registry_domain }}/{{ item }}"
     dest: "{{ registry_tls_path }}/{{ item }}"
     remote_src: yes
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0644'
   loop:
     - fullchain.pem
