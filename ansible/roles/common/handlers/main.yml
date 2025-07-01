@@ -1,0 +1,9 @@
+---
+- name: Systemd daemon-reload
+  ansible.builtin.command: >-
+    systemctl daemon-reload
+
+- name: Restart xray service
+  ansible.builtin.command: >-
+    systemctl restart xray
+
