@@ -1,0 +1,6 @@
+---
+- name: Configure Docker hosts
+  hosts: home_lab
+  become: yes
+  roles:
+    - role: geerlingguy.docker
