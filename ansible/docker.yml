@@ -3,4 +3,4 @@
   hosts: home_lab
   become: yes
   roles:
-    - role: geerlingguy.docker
+    - role: docker
