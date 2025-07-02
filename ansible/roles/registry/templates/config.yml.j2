@@ -13,13 +13,13 @@ storage:
 auth:
   htpasswd:
     realm: local-registry
-    path: {{ registry_auth_file }}
+    path: /etc/docker/registry/auth/htpasswd
 http:
   addr: :5000
   host: https://{{ registry_domain }}
   tls:
-    certificate: {{ registry_tls_path }}/fullchain.pem
-    key: {{ registry_tls_path }}/privkey.pem
+    certificate: /etc/docker/registry/tls/fullchain.pem
+    key: /etc/docker/registry/tls/privkey.pem
   accesslog:
     disabled: false
 proxy:

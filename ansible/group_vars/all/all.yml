@@ -18,7 +18,7 @@ registry_auth_file: "{{ registry_auth_path }}/htpasswd"
 
 # Registry settings
 registry_domain: registry.tirro.ir
-registry_outbound_proxy: "http://your-outbound-proxy.com:8080"
+registry_outbound_proxy: "http://172.17.0.1:10809"
 
 # User credentials (override these securely with Ansible Vault)
 registry_user: "ci-user"

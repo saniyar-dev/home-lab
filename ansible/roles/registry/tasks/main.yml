@@ -28,6 +28,16 @@
     - "{{ registry_auth_path }}"
   become: yes
 
+- name: Remove available configuration and files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: "absent"
+  loop:
+    - "{{ registry_config_file }}"
+    - "{{ registry_auth_file }}"
+    - "{{ registry_tls_path }}/fullchain.pem"
+    - "{{ registry_tls_path }}/privkey.pem"
+
 - name: Template the registry config.yml
   ansible.builtin.template:
     src: config.yml.j2
@@ -36,6 +46,8 @@
     group: "{{ ansible_user }}"
     mode: '0644'
   notify: Restart registry container # This handler will restart the container if the config changes
+  # args:
+  #   creates: "{{ registry_config_file }}"
 
 - name: Create htpasswd file and add registry user
   community.general.htpasswd:
@@ -45,6 +57,8 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0644'
+  # args:
+  #   creates: "{{ registry_auth_file }}"
 
 - name: Copy TLS certificate and key
   ansible.builtin.copy:
@@ -57,6 +71,10 @@
     - { src: "{{ registry_tls_src }}/{{ registry_domain }}.pem", dest: "{{ registry_tls_path }}/fullchain.pem" }
     - { src: "{{ registry_tls_src }}/{{ registry_domain }}.key", dest: "{{ registry_tls_path }}/privkey.pem" }
   notify: Restart registry container # Also restart if certs change
+  # args:
+  #   creates:
+  #     - "{{ registry_tls_path }}/fullchain.pem"
+  #     - "{{ registry_tls_path }}/privkey.pem"
   when: 
     - registry_domain not in (acme_sh_domains | map(attribute='domains'))
     - not registry_tls_remote_src
@@ -73,9 +91,18 @@
     - { src: "{{ registry_tls_src }}/{{ registry_domain }}.pem", dest: "{{ registry_tls_path }}/fullchain.pem" }
     - { src: "{{ registry_tls_src }}/{{ registry_domain }}.key", dest: "{{ registry_tls_path }}/privkey.pem" }
   notify: Restart registry container # Also restart if certs change
+  # args:
+  #   creates:
+  #     - "{{ registry_tls_path }}/fullchain.pem"
+  #     - "{{ registry_tls_path }}/privkey.pem"
   when: 
     - registry_domain not in (acme_sh_domains | map(attribute='domains'))
     - registry_tls_remote_src
+
+- name: Remove the Docker Registry container
+  community.docker.docker_container:
+    name: registry
+    state: absent
 
 - name: Deploy the Docker Registry container
   community.docker.docker_container:
@@ -86,8 +113,9 @@
     ports:
       - "5000:5000"
     env:
-      HTTP_PROXY: "{{ registry_outbound_proxy }}"
-      HTTPS_PROXY: "{{ registry_outbound_proxy }}"
+      http_proxy: "{{ registry_outbound_proxy }}"
+      https_proxy: "{{ registry_outbound_proxy }}"
+      NO_PROXY: "localhost,127.0.0.1" # Important for health checks
     volumes:
       - "{{ registry_storage_path }}:/var/lib/registry"
       - "{{ registry_config_file }}:/etc/docker/registry/config.yml:ro"
