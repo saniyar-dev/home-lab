@@ -11,7 +11,8 @@ registry_storage_path: /var/registry/data
 registry_config_base_path: /opt/registry
 registry_config_file: "{{ registry_config_base_path }}/config.yml"
 registry_tls_path: "{{ registry_config_base_path }}/tls"
-registry_copy_from_path: "{{ acme_sh_copy_certs_to_path }}/registry.tirro.ir"
+registry_tls_src: "{{ acme_sh_copy_certs_to_path }}/{{ registry_domain }}"
+registry_tls_remote_src: true
 registry_auth_path: "{{ registry_config_base_path }}/auth"
 registry_auth_file: "{{ registry_auth_path }}/htpasswd"
 
