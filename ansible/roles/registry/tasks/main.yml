@@ -4,11 +4,14 @@
 - name: Ensure required system packages are installed
   ansible.builtin.apt:
     name:
-      - docker.io
+      - docker-ce
+      - docker-ce-cli
+      - docker-ce-rootless-extras
       - apache2-utils # for htpasswd command-line tool
       - python3-passlib # REQUIRED by the htpasswd Ansible module
     state: present
     update_cache: yes
+  environment: ["{{ proxy }}"]
   become: yes
 
 - name: Ensure host directories for registry exist
@@ -77,7 +80,7 @@
 - name: Deploy the Docker Registry container
   community.docker.docker_container:
     name: registry
-    image: registry:2
+    image: hub.hamdocker.ir/library/registry:2
     state: started
     restart_policy: always
     ports:
@@ -90,3 +93,4 @@
       - "{{ registry_config_file }}:/etc/docker/registry/config.yml:ro"
       - "{{ registry_tls_path }}:/etc/docker/registry/tls:ro"
       - "{{ registry_auth_path }}:/etc/docker/registry/auth:ro"
+  # environment: ["{{ proxy }}"]
