@@ -22,6 +22,7 @@
     state: "{{ docker_packages_state }}"
   notify: restart docker
   ignore_errors: "{{ ansible_check_mode }}"
+  environment: ["{{ proxy }}"]
   when: "ansible_version.full is version_compare('2.12', '<') or ansible_os_family not in ['RedHat', 'Debian']"
 
 - name: Install Docker packages (with downgrade option).
@@ -31,6 +32,7 @@
     allow_downgrade: true
   notify: restart docker
   ignore_errors: "{{ ansible_check_mode }}"
+  environment: ["{{ proxy }}"]
   when: "ansible_version.full is version_compare('2.12', '>=') and ansible_os_family in ['RedHat', 'Debian']"
 
 - name: Install docker-compose plugin.
@@ -39,6 +41,7 @@
     state: "{{ docker_compose_package_state }}"
   notify: restart docker
   ignore_errors: "{{ ansible_check_mode }}"
+  environment: ["{{ proxy }}"]
   when: "docker_install_compose_plugin | bool == true and (ansible_version.full is version_compare('2.12', '<') or ansible_os_family not in ['RedHat', 'Debian'])"
 
 - name: Install docker-compose-plugin (with downgrade option).
@@ -48,6 +51,7 @@
     allow_downgrade: true
   notify: restart docker
   ignore_errors: "{{ ansible_check_mode }}"
+  environment: ["{{ proxy }}"]
   when: "docker_install_compose_plugin | bool == true and ansible_version.full is version_compare('2.12', '>=') and ansible_os_family in ['RedHat', 'Debian']"
 
 - name: Ensure /etc/docker/ directory exists.
