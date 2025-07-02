@@ -15,7 +15,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "{{ ansible_user }}" # Using ansible_user to avoid become issues
+    owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0755'
   loop:
@@ -24,7 +24,6 @@
     - "{{ registry_tls_path }}"
     - "{{ registry_auth_path }}"
   become: yes
-  become_user: root
 
 - name: Template the registry config.yml
   ansible.builtin.template:
@@ -52,25 +51,28 @@
     group: "{{ ansible_user }}"
     mode: '0600'
   loop:
-    - { src: "{{ registry_tls_cert_src }}", dest: "{{ registry_tls_path }}/fullchain.pem" }
-    - { src: "{{ registry_tls_key_src }}", dest: "{{ registry_tls_path }}/privkey.pem" }
+    - { src: "{{ registry_tls_src }}/{{ registry_domain }}.pem", dest: "{{ registry_tls_path }}/fullchain.pem" }
+    - { src: "{{ registry_tls_src }}/{{ registry_domain }}.key", dest: "{{ registry_tls_path }}/privkey.pem" }
   notify: Restart registry container # Also restart if certs change
-  when: registry_domain not in (letsencrypt_certs | map(attribute='domain'))
+  when: 
+    - registry_domain not in (acme_sh_domains | map(attribute='domains'))
+    - not registry_tls_remote_src
 
-- name: Copy TLS certs from letsencrypt dir to registry config dir
+- name: Copy TLS certificate and key within remote host
   ansible.builtin.copy:
-    src: "/etc/letsencrypt/live/{{ registry_domain }}/{{ item }}"
-    dest: "{{ registry_tls_path }}/{{ item }}"
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     remote_src: yes
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0644'
+    mode: '0600'
   loop:
-    - fullchain.pem
-    - privkey.pem
-  become: yes
-  notify: Restart registry container
-  when: registry_domain in (letsencrypt_certs | map(attribute='domain'))
+    - { src: "{{ registry_tls_src }}/{{ registry_domain }}.pem", dest: "{{ registry_tls_path }}/fullchain.pem" }
+    - { src: "{{ registry_tls_src }}/{{ registry_domain }}.key", dest: "{{ registry_tls_path }}/privkey.pem" }
+  notify: Restart registry container # Also restart if certs change
+  when: 
+    - registry_domain not in (acme_sh_domains | map(attribute='domains'))
+    - registry_tls_remote_src
 
 - name: Deploy the Docker Registry container
   community.docker.docker_container:
