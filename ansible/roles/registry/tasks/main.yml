@@ -56,6 +56,7 @@
     password: "{{ registry_password }}" # NOTE: Store this password securely in Ansible Vault
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+    crypt_scheme: bcrypt
     mode: '0644'
   # args:
   #   creates: "{{ registry_auth_file }}"
