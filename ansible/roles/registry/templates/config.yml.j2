@@ -10,12 +10,11 @@ log:
     environment: home-lab
 storage:
   filesystem:
-    rootdirectory: {{ registry_storage_path }}
+    rootdirectory: /var/lib/registry
   delete:
     enabled: true
   cache:
       blobdescriptor: inmemory
-      blobdescriptorsize: 100
   tag:
     concurrencylimit: 5
 auth:
@@ -24,17 +23,11 @@ auth:
     path: /etc/docker/registry/auth/htpasswd
 http:
   addr: :5000
-  net: tcp
-  host: http://{{ registry_domain }}
-  draintimeout: 20s
   debug:
     addr: :5001
     prometheus:
       enabled: true
       path: /metrics
-proxy:
-  remoteurl: https://registry-1.docker.io
-  ttl: 168h
 health:
   storagedriver:
     enabled: true
