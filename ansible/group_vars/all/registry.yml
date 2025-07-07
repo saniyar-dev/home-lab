@@ -1,0 +1,29 @@
+#### registry vars ####
+# Host paths
+registry_storage_path: /var/registry/data
+registry_config_base_path: /opt/registry
+registry_config_file: "{{ registry_config_base_path }}/config.yml"
+registry_tls_path: "{{ registry_config_base_path }}/tls"
+registry_tls_src: "{{ acme_sh_copy_certs_to_path }}/{{ registry_domain }}"
+registry_tls_remote_src: true
+registry_auth_path: "{{ registry_config_base_path }}/auth"
+registry_auth_file: "{{ registry_auth_path }}/htpasswd"
+
+# Registry settings
+registry_domain: registry.tirro.ir
+
+# --- Mirror registry vars ---
+# Host paths
+mirror_registry_storage_path: /var/registry/mirror/data
+mirror_registry_config_base_path: /opt/registry/mirror
+mirror_registry_config_file: "{{ mirror_registry_config_base_path }}/config.yml"
+mirror_registry_tls_path: "{{ mirror_registry_config_base_path }}/tls"
+mirror_registry_tls_src: "{{ acme_sh_copy_certs_to_path }}/{{ mirror_registry_domain }}"
+mirror_registry_tls_remote_src: true
+# mirror_registry_auth_path: "{{ mirror_registry_config_base_path }}/auth"
+# mirror_registry_auth_file: "{{ mirror_registry_auth_path }}/htpasswd"
+
+# Registry settings
+mirror_registry_domain: hub.tirro.ir
+mirror_registry_outbound_proxy: "http://172.17.0.1:10809"
+

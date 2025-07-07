@@ -1,0 +1,127 @@
+# roles/registry/tasks/main.yml
+# This is the main task file for the registry role.
+---
+- name: Ensure required system packages are installed
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - docker-ce-rootless-extras
+      - apache2-utils # for htpasswd command-line tool
+      - python3-passlib # REQUIRED by the htpasswd Ansible module
+    state: present
+    update_cache: yes
+  environment: ["{{ proxy }}"]
+  become: yes
+
+- name: Ensure host directories for registry exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - "{{ mirror_registry_storage_path }}"
+    - "{{ mirror_registry_config_base_path }}"
+    - "{{ mirror_registry_tls_path }}"
+    # - "{{ mirror_registry_auth_path }}"
+  become: yes
+
+- name: Remove available configuration and files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: "absent"
+  loop:
+    - "{{ mirror_registry_config_file }}"
+    # - "{{ mirror_registry_auth_file }}"
+    - "{{ mirror_registry_tls_path }}/fullchain.pem"
+    - "{{ mirror_registry_tls_path }}/privkey.pem"
+
+- name: Template the registry config.yml
+  ansible.builtin.template:
+    src: mirror.config.yml.j2
+    dest: "{{ mirror_registry_config_file }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  notify: Restart mirror container # This handler will restart the container if the config changes
+  # args:
+  #   creates: "{{ mirror_registry_config_file }}"
+
+# - name: Create htpasswd file and add registry user
+#   community.general.htpasswd:
+#     path: "{{ mirror_registry_auth_file }}"
+#     name: "{{ mirror_registry_user }}"
+#     password: "{{ mirror_registry_password }}" # NOTE: Store this password securely in Ansible Vault
+#     owner: "{{ ansible_user }}"
+#     group: "{{ ansible_user }}"
+#     crypt_scheme: bcrypt
+#     mode: '0644'
+#   args:
+#     creates: "{{ mirror_registry_auth_file }}"
+
+- name: Copy TLS certificate and key
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  loop:
+    - { src: "{{ mirror_registry_tls_src }}/{{ mirror_registry_domain }}.pem", dest: "{{ mirror_registry_tls_path }}/fullchain.pem" }
+    - { src: "{{ mirror_registry_tls_src }}/{{ mirror_registry_domain }}.key", dest: "{{ mirror_registry_tls_path }}/privkey.pem" }
+  notify: Restart mirror container # Also restart if certs change
+  # args:
+  #   creates:
+  #     - "{{ mirror_registry_tls_path }}/fullchain.pem"
+  #     - "{{ mirror_registry_tls_path }}/privkey.pem"
+  when: 
+    - mirror_registry_domain not in (acme_sh_domains | map(attribute='domains'))
+    - not mirror_registry_tls_remote_src
+
+- name: Copy TLS certificate and key within remote host
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  loop:
+    - { src: "{{ mirror_registry_tls_src }}/{{ mirror_registry_domain }}.pem", dest: "{{ mirror_registry_tls_path }}/fullchain.pem" }
+    - { src: "{{ mirror_registry_tls_src }}/{{ mirror_registry_domain }}.key", dest: "{{ mirror_registry_tls_path }}/privkey.pem" }
+  notify: Restart mirror container # Also restart if certs change
+  # args:
+  #   creates:
+  #     - "{{ mirror_registry_tls_path }}/fullchain.pem"
+  #     - "{{ mirror_registry_tls_path }}/privkey.pem"
+  when: 
+    - mirror_registry_domain not in (acme_sh_domains | map(attribute='domains'))
+    - mirror_registry_tls_remote_src
+
+- name: Remove the Docker Registry container
+  community.docker.docker_container:
+    name: mirror
+    state: absent
+
+- name: Deploy the Docker Registry container
+  community.docker.docker_container:
+    name: mirror
+    image: hub.hamdocker.ir/library/registry:3
+    state: started
+    restart_policy: always
+    ports:
+      - "5002:5000"
+      - "5003:5001"
+    env:
+      http_proxy: "{{ mirror_registry_outbound_proxy }}"
+      https_proxy: "{{ mirror_registry_outbound_proxy }}"
+      no_proxy: "localhost,127.0.0.1,172.17.0.1" # Important for health checks
+    volumes:
+      - "{{ mirror_registry_storage_path }}:/var/lib/registry"
+      - "{{ mirror_registry_config_file }}:/etc/distribution/config.yml:ro"
+      - "{{ mirror_registry_tls_path }}:/etc/docker/registry/tls:ro"
+      # - "{{ mirror_registry_auth_path }}:/etc/docker/registry/auth:ro"
+  # environment: ["{{ proxy }}"]
+

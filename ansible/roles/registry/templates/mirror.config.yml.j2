@@ -6,7 +6,7 @@ log:
   level: debug
   formatter: json
   fields:
-    service: registry
+    service: mirror_registry
     environment: home-lab
 storage:
   filesystem:
@@ -17,10 +17,6 @@ storage:
       blobdescriptor: inmemory
   tag:
     concurrencylimit: 5
-auth:
-  htpasswd:
-    realm: local-registry
-    path: /etc/docker/registry/auth/htpasswd
 http:
   addr: :5000
   debug:
@@ -28,6 +24,8 @@ http:
     prometheus:
       enabled: true
       path: /metrics
+proxy:
+  remoteurl: https://registry-1.docker.io
 health:
   storagedriver:
     enabled: true
