@@ -114,10 +114,10 @@
     ports:
       - "5000:5000"
       - "5001:5001"
-    env:
-      http_proxy: "{{ registry_outbound_proxy }}"
-      https_proxy: "{{ registry_outbound_proxy }}"
-      no_proxy: "localhost,127.0.0.1,172.17.0.1" # Important for health checks
+    # env:
+    #   http_proxy: "{{ registry_outbound_proxy }}"
+    #   https_proxy: "{{ registry_outbound_proxy }}"
+    #   no_proxy: "localhost,127.0.0.1,172.17.0.1" # Important for health checks
     volumes:
       - "{{ registry_storage_path }}:/var/lib/registry"
       - "{{ registry_config_file }}:/etc/distribution/config.yml:ro"

@@ -6,7 +6,7 @@ log:
   level: debug
   formatter: json
   fields:
-    service: registry
+    service: mirror_registry
     environment: home-lab
 storage:
   filesystem:
@@ -28,6 +28,8 @@ http:
     prometheus:
       enabled: true
       path: /metrics
+proxy:
+  remoteurl: https://registry-1.docker.io
 health:
   storagedriver:
     enabled: true
