@@ -1,29 +1,43 @@
 ---
 version: 0.1
 log:
+  accesslog:
+    disabled: true
   level: debug
   formatter: json
   fields:
     service: registry
+    environment: home-lab
 storage:
   filesystem:
     rootdirectory: {{ registry_storage_path }}
   delete:
     enabled: true
+  cache:
+      blobdescriptor: inmemory
+      blobdescriptorsize: 100
+  tag:
+    concurrencylimit: 5
 auth:
   htpasswd:
     realm: local-registry
     path: /etc/docker/registry/auth/htpasswd
 http:
   addr: :5000
+  net: tcp
   host: https://{{ registry_domain }}
+  draintimeout: 20s
   tls:
     certificate: /etc/docker/registry/tls/fullchain.pem
     key: /etc/docker/registry/tls/privkey.pem
-  accesslog:
-    disabled: false
+  debug:
+    addr: :5001
+    prometheus:
+      enabled: true
+      path: /metrics
 proxy:
   remoteurl: https://registry-1.docker.io
+  ttl: 168h
 health:
   storagedriver:
     enabled: true

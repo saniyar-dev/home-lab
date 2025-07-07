@@ -107,18 +107,19 @@
 - name: Deploy the Docker Registry container
   community.docker.docker_container:
     name: registry
-    image: hub.hamdocker.ir/library/registry:2
+    image: hub.hamdocker.ir/library/registry:3
     state: started
     restart_policy: always
     ports:
       - "5000:5000"
+      - "5001:5001"
     env:
       http_proxy: "{{ registry_outbound_proxy }}"
       https_proxy: "{{ registry_outbound_proxy }}"
-      NO_PROXY: "localhost,127.0.0.1" # Important for health checks
+      no_proxy: "localhost,127.0.0.1,172.17.0.1" # Important for health checks
     volumes:
       - "{{ registry_storage_path }}:/var/lib/registry"
-      - "{{ registry_config_file }}:/etc/docker/registry/config.yml:ro"
+      - "{{ registry_config_file }}:/etc/distribution/config.yml:ro"
       - "{{ registry_tls_path }}:/etc/docker/registry/tls:ro"
       - "{{ registry_auth_path }}:/etc/docker/registry/auth:ro"
   # environment: ["{{ proxy }}"]
