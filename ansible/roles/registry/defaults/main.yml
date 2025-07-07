@@ -3,6 +3,7 @@
 # You can override these in your inventory (e.g., group_vars/all/main.yml)
 # roles/registry/defaults/main.yml
 ---
+registry_setup: true
 # Host paths
 registry_storage_path: /var/registry/data
 registry_config_base_path: /opt/registry
@@ -28,6 +29,7 @@ registry_password: "CHANGEME"
 #
 #
 # --- Mirror registry vars ---
+mirror_registry_setup: true
 # Host paths
 mirror_registry_storage_path: /var/registry/mirror/data
 mirror_registry_config_base_path: /opt/registry/mirror

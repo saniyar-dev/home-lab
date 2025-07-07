@@ -24,6 +24,6 @@ mirror_registry_auth_path: "{{ mirror_registry_config_base_path }}/auth"
 mirror_registry_auth_file: "{{ mirror_registry_auth_path }}/htpasswd"
 
 # Registry settings
-mirror_registry_domain: hub.home-lab.ir
+mirror_registry_domain: hub.tirro.ir
 mirror_registry_outbound_proxy: "http://172.17.0.1:10809"
 
