@@ -20,8 +20,8 @@ mirror_registry_config_file: "{{ mirror_registry_config_base_path }}/config.yml"
 mirror_registry_tls_path: "{{ mirror_registry_config_base_path }}/tls"
 mirror_registry_tls_src: "{{ acme_sh_copy_certs_to_path }}/{{ mirror_registry_domain }}"
 mirror_registry_tls_remote_src: true
-mirror_registry_auth_path: "{{ mirror_registry_config_base_path }}/auth"
-mirror_registry_auth_file: "{{ mirror_registry_auth_path }}/htpasswd"
+# mirror_registry_auth_path: "{{ mirror_registry_config_base_path }}/auth"
+# mirror_registry_auth_file: "{{ mirror_registry_auth_path }}/htpasswd"
 
 # Registry settings
 mirror_registry_domain: hub.tirro.ir
