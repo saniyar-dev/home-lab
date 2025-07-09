@@ -1,0 +1,15 @@
+# --- Role Variables for geerlingguy.docker ---
+
+# Set to 'ce' for Community Edition (default) or 'ee' for Enterprise
+docker_edition: 'ce'
+
+# Ensure the Docker service is started and enabled on boot
+docker_service_state: started
+docker_service_enabled: true
+
+# Automatically install the Docker Compose plugin (recommended)
+docker_install_compose_plugin: true
+
+# Add users to the 'docker' group
+docker_users:
+  - ansible_user
