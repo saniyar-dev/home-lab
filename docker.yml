@@ -1,6 +1,6 @@
 ---
 - name: Configure Docker hosts
-  hosts: home_lab
+  hosts: all
   become: yes
   roles:
     - role: docker
