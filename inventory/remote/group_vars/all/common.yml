@@ -1,6 +1,7 @@
 ansible_user: "saniyar"
 
-xray_config_local_dir_src: "/home/saniyar/vpn/proxy"
+xray_config_local_dir_src: "/home/saniyar/vpn/subxray"
 proxy:
   "http_proxy": "http://127.0.0.1:10809"
   "https_proxy": "http://127.0.0.1:10809"
+install_proxy: true
