@@ -75,6 +75,7 @@
   when: 
     - not xray_uninstall 
     - xray_config_update
+    - install_proxy
   become_user: "{{ ansible_user }}"
 
 - name: Uninstall xray from install script
