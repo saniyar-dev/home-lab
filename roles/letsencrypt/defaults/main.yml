@@ -29,7 +29,7 @@ acme_sh_default_dns_provider: "dns_cf"
 acme_sh_default_dns_provider_api_keys:
   "CF_Key": "THE_API_SECRET_TOKEN_FROM_THE_CLOUDFLARE_DASHBOARD"
   "CF_Email": "you@example.com"
-acme_sh_default_dns_sleep: 10
+acme_sh_default_dns_sleep: 30
 
 # acme_sh_proxy:
 #   "http_proxy": "http://127.0.0.1:10809"

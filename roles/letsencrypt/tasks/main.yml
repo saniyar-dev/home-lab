@@ -161,6 +161,7 @@
     {{ "--post-hook " + '"' + item.issue_post_hook | default(acme_sh_default_issue_post_hook) + '"' if item.issue_post_hook | default(acme_sh_default_issue_post_hook) else "" }}
     {{ "--renew-hook " + '"' + item.issue_renew_hook | default(acme_sh_default_issue_renew_hook) + '"' if item.issue_renew_hook | default(acme_sh_default_issue_renew_hook) else "" }}
     {{ item.extra_flags_issue | default(acme_sh_default_extra_flags_issue) }}
+    --server https://acme-v02.api.letsencrypt.org/directory
   args:
     chdir: "~/.acme.sh"
   environment: ["{{ item.dns_provider_api_keys | default(acme_sh_default_dns_provider_api_keys) }}", "{{ proxy }}"]
@@ -183,6 +184,7 @@
     ./acme.sh --renew -d {{ item.domains | first }} --force
     {{ "--debug" if item.debug | default(acme_sh_default_debug) else "" }}
     {{ item.extra_flags_renew | default(acme_sh_default_extra_flags_renew) }}
+    --server https://acme-v02.api.letsencrypt.org/directory
   args:
     chdir: "~/.acme.sh"
   loop: "{{ acme_sh_domains }}"
