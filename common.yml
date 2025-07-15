@@ -1,0 +1,7 @@
+# playbook.yml
+---
+- hosts: all # Target host from your inventory
+  become: yes
+  roles:
+    - common
+    - letsencrypt

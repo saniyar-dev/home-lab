@@ -1,6 +1,0 @@
-# playbook.yml
----
-- hosts: home_lab # Target host from your inventory
-  become: yes
-  roles:
-    - common
