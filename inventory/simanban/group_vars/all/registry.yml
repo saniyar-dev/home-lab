@@ -10,7 +10,7 @@ registry_auth_path: "{{ registry_config_base_path }}/auth"
 registry_auth_file: "{{ registry_auth_path }}/htpasswd"
 
 # Registry settings
-registry_domain: registry.tirro.ir
+registry_domain: registry.home-lab.ir
 
 # --- Mirror registry vars ---
 # Host paths
@@ -24,6 +24,6 @@ mirror_registry_tls_remote_src: true
 # mirror_registry_auth_file: "{{ mirror_registry_auth_path }}/htpasswd"
 
 # Registry settings
-mirror_registry_domain: hub.tirro.ir
+mirror_registry_domain: hub.home-lab.ir
 mirror_registry_outbound_proxy: "http://172.17.0.1:10809"
 

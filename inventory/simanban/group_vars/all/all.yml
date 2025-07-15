@@ -1,6 +1,11 @@
 #### letsencrypt vars ####
 # acme_sh_uninstall: true
 acme_sh_copy_certs_to_path: "/etc/ssl/acme.sh"
+acme_sh_account_email: "saniyar@simanban.com"
 acme_sh_domains: 
   - domains: ["n8n.home-lab.ir"]
+    install_cert_reloadcmd: "docker restart simanban-n8n-container"
+  - domains: ["registry.home-lab.ir"]
+    install_cert_reloadcmd: "docker restart simanban-n8n-container"
+  - domains: ["hub.home-lab.ir"]
     install_cert_reloadcmd: "docker restart simanban-n8n-container"
